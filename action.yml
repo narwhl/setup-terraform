@@ -1,0 +1,51 @@
+name: 'NARWHL - Setup Terraform'
+description: 'Sets up Terraform CLI in your GitHub Actions workflow.'
+author: 'NARWHL Ltd.'
+
+inputs:
+  bucket:
+    description: 'S3 Bucket to store the state'
+    required: true
+    default: 'terraform'
+  state:
+    description: 'State file path/name on bucket'
+    required: false
+    default: ''
+  terraform_version:
+    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
+    default: 'latest'
+    required: false
+  terraform_wrapper:
+    description: 'Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.'
+    default: 'true'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prefill terraform s3 backend credentials
+      shell: bash
+      run: |
+        cat > ./config.s3.tfbackend << EOF
+        bucket                      = "${{ inputs.bucket }}"
+        region                      = "auto"
+        skip_credentials_validation = true
+        skip_requesting_account_id  = true
+        skip_metadata_api_check     = true
+        skip_region_validation      = true
+        skip_s3_checksum            = true
+        use_path_style              = true
+        EOF
+        echo "TF_CLI_ARGS_init='-backend-config=./config.s3.tfbackend'" >> "$GITHUB_ENV"
+    - name: Add state key to backend file if input was detected
+      shell: bash
+      if: ${{ inputs.state != '' }}
+      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> config.s3.tfbackend
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+        terraform_wrapper: ${{ inputs.terraform_wrapper }}
+
+branding:
+  icon: 'terminal'
+  color: 'purple'
