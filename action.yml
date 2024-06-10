@@ -53,7 +53,7 @@ runs:
             }
           });
           const verification = await tokenValidityCheckResponse.json();
-          if (!verification.hasOwnProperty('result') || verification.result.id !== process.env.AWS_ACCESS_KEY_ID || verification.result.status !== 'active') {
+          if (!verification.hasOwnProperty('result') || verification.result.id !== process.env.CF_R2_ACCESS_KEY_ID || verification.result.status !== 'active') {
             core.setFailed('Failed to validate state backend access token')
           }
     - uses: hashicorp/setup-terraform@v3
