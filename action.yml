@@ -47,7 +47,7 @@ runs:
         script: |
           const tokenValidityCheckResponse = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
             headers: {
-              authorization: `Bearer ${env.CF_R2_API_TOKEN}`
+              authorization: `Bearer ${process.env.CF_R2_API_TOKEN}`
             }
           });
           const result = await tokenValidityCheckResponse.json();
