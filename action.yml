@@ -45,7 +45,7 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, 15000));
           const tokenValidityCheckResponse = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
             headers: {
               authorization: `Bearer ${process.env.CF_R2_API_TOKEN}`
