@@ -45,15 +45,13 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-          await new Promise(resolve => setTimeout(resolve, 15000));
           const tokenValidityCheckResponse = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
             headers: {
               authorization: `Bearer ${process.env.CF_R2_API_TOKEN}`
             }
           });
-          const result = await tokenValidityCheckResponse.json();
-          console.log(result)
-          if (!result.hasOwnProperty('result') || result.id !== process.env.AWS_ACCESS_KEY_ID || result.status !== 'active') {
+          const verification = await tokenValidityCheckResponse.json();
+          if (!verification.hasOwnProperty('result') || verification.result.id !== process.env.AWS_ACCESS_KEY_ID || verification.result.status !== 'active') {
             core.setFailed('Failed to validate state backend access token')
           }
     - uses: hashicorp/setup-terraform@v3
