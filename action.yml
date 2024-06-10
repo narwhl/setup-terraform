@@ -27,6 +27,8 @@ runs:
       shell: bash
       run: |
         cat > ${{ github.action_path }}/config.s3.tfbackend << EOF
+        access_key                  = "${{ env.CF_R2_ACCESS_KEY_ID }}"
+        secret_key                  = "${{ env.CF_R2_SECRET_ACCESS_KEY }}"
         bucket                      = "${{ inputs.bucket }}"
         region                      = "auto"
         skip_credentials_validation = true
