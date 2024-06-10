@@ -52,6 +52,7 @@ runs:
             }
           });
           const result = await tokenValidityCheckResponse.json();
+          console.log(result)
           if (!result.hasOwnProperty('result') || result.id !== process.env.AWS_ACCESS_KEY_ID || result.status !== 'active') {
             core.setFailed('Failed to validate state backend access token')
           }
