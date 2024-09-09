@@ -45,7 +45,7 @@ runs:
     - name: Add state key to backend file if input was detected
       shell: bash
       if: ${{ inputs.state != '' }}
-      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> config.s3.tfbackend
+      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> ${{ github.action_path }}/config.s3.tfbackend
     - name: Check Cloudflare R2 credentials validity
       uses: actions/github-script@v7
       with:
