@@ -25,6 +25,7 @@ runs:
   steps:
     - name: Set outputs
       id: vars
+      shell: bash
       run: |
         echo "backend_config_path=${{ github.action_path }}/config.s3.tfbackend" >> "$GITHUB_OUTPUT"
     - name: Prefill terraform s3 backend credentials
