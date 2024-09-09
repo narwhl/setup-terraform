@@ -23,10 +23,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set outputs
+      id: vars
+      run: |
+        echo "backend_config_path=${{ github.action_path }}/config.s3.tfbackend" >> "$GITHUB_OUTPUT"
     - name: Prefill terraform s3 backend credentials
       shell: bash
       run: |
-        cat > ${{ github.action_path }}/config.s3.tfbackend << EOF
+        cat > ${{ steps.vars.outputs.backend_config_path }} << EOF
         endpoints = {
           s3 = "${{ env.CF_R2_ENDPOINT_URL }}"
         }
@@ -41,11 +45,11 @@ runs:
         skip_s3_checksum            = true
         use_path_style              = true
         EOF
-        echo "TF_CLI_ARGS_init='-backend-config=${{ github.action_path }}/config.s3.tfbackend'" >> "$GITHUB_ENV"
+        echo "TF_CLI_ARGS_init='-backend-config=${{ steps.vars.outputs.backend_config_path }}'" >> "$GITHUB_ENV"
     - name: Add state key to backend file if input was detected
       shell: bash
       if: ${{ inputs.state != '' }}
-      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> ${{ github.action_path }}/config.s3.tfbackend
+      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> ${{ steps.vars.outputs.backend_config_path }}
     - name: Check Cloudflare R2 credentials validity
       uses: actions/github-script@v7
       with:
