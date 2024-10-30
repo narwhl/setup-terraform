@@ -47,7 +47,7 @@ runs:
         use_path_style              = true
         EOF
         echo "TF_CLI_ARGS_init='-backend-config=${{ steps.vars.outputs.backend_config_path }}'" >> "$GITHUB_ENV"
-        echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ) [✔] Terraform backend config file written to ${{ steps.vars.outputs.backend_config_path }}"
+        echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') [✔] Terraform backend config file written to ${{ steps.vars.outputs.backend_config_path }}"
     - name: Add state key to backend file if input was detected
       shell: bash
       if: ${{ inputs.state != '' }}
