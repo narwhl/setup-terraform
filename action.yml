@@ -47,6 +47,7 @@ runs:
         use_path_style              = true
         EOF
         echo "TF_CLI_ARGS_init='-backend-config=${{ steps.vars.outputs.backend_config_path }}'" >> "$GITHUB_ENV"
+        echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ) [✔] Terraform backend config file written to ${{ steps.vars.outputs.backend_config_path }}"
     - name: Add state key to backend file if input was detected
       shell: bash
       if: ${{ inputs.state != '' }}
@@ -63,7 +64,9 @@ runs:
           });
           const verification = await tokenValidityCheckResponse.json();
           if (!verification.hasOwnProperty('result') || verification.result.id !== process.env.CF_R2_ACCESS_KEY_ID || verification.result.status !== 'active') {
-            core.setFailed('Failed to validate state backend access token')
+            core.setFailed(`${new Date().toISOString()} [✗] Failed to validate state backend access token`)
+          } else {
+            console.log(`${new Date().toISOString()} [✔] Credentials to authenticate to terraform backend validated`)
           }
     - uses: hashicorp/setup-terraform@v3
       with:
