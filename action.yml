@@ -1,72 +1,42 @@
-name: 'NARWHL - Setup Terraform'
-description: 'Sets up Terraform CLI in your GitHub Actions workflow.'
-author: 'NARWHL Ltd.'
+name: "Setup Terraform"
+description: "Sets up Terraform CLI in your GitHub Actions workflow."
+author: "narwhl"
 
 inputs:
-  bucket:
-    description: 'S3 Bucket to store the state'
+  endpoint:
+    description: "Terraform HTTP backend to store the state"
     required: true
-    default: 'terraform'
+    default: "https://terraform.narwhl.workers.dev"
   state:
-    description: 'State file path/name on bucket'
-    required: false
-    default: ''
+    description: "State file path/name on bucket"
+    required: true
   terraform_version:
     description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
-    default: 'latest'
+    default: "latest"
     required: false
   terraform_wrapper:
-    description: 'Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.'
-    default: 'true'
+    description: "Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`."
+    default: "true"
     required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Set outputs
-      id: vars
-      shell: bash
-      run: |
-        echo "backend_config_path=${{ github.action_path }}/config.s3.tfbackend" >> "$GITHUB_OUTPUT"
-    - name: Prefill terraform s3 backend credentials
-      shell: bash
-      run: |
-        cat > ${{ steps.vars.outputs.backend_config_path }} << EOF
-        endpoints = {
-          s3 = "${{ env.CF_R2_ENDPOINT_URL }}"
-        }
-        access_key                  = "${{ env.CF_R2_ACCESS_KEY_ID }}"
-        secret_key                  = "${{ env.CF_R2_SECRET_ACCESS_KEY }}"
-        bucket                      = "${{ inputs.bucket }}"
-        region                      = "auto"
-        skip_credentials_validation = true
-        skip_requesting_account_id  = true
-        skip_metadata_api_check     = true
-        skip_region_validation      = true
-        skip_s3_checksum            = true
-        use_path_style              = true
-        EOF
-        echo "TF_CLI_ARGS_init='-backend-config=${{ steps.vars.outputs.backend_config_path }}'" >> "$GITHUB_ENV"
-        echo "$(date -u +'%Y-%m-%dT%H:%M:%S.%3NZ') [✔] Terraform backend config file written to ${{ steps.vars.outputs.backend_config_path }}"
-    - name: Add state key to backend file if input was detected
-      shell: bash
-      if: ${{ inputs.state != '' }}
-      run: echo 'key = "states/${{ inputs.state }}.tfstate"' >> ${{ steps.vars.outputs.backend_config_path }}
-    - name: Check Cloudflare R2 credentials validity
+    - name: Configure Terraform backend and credentials
       uses: actions/github-script@v7
       with:
         script: |
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          const tokenValidityCheckResponse = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
-            headers: {
-              authorization: `Bearer ${process.env.CF_R2_API_TOKEN}`
-            }
-          });
-          const verification = await tokenValidityCheckResponse.json();
-          if (!verification.hasOwnProperty('result') || verification.result.id !== process.env.CF_R2_ACCESS_KEY_ID || verification.result.status !== 'active') {
-            core.setFailed(`${new Date().toISOString()} [✗] Failed to validate state backend access token`)
-          } else {
-            console.log(`${new Date().toISOString()} [✔] Credentials to authenticate to terraform backend validated`)
+          const token = await core.getIDToken();
+          const url = "${{ inputs.endpoint }}/states/${{ inputs.state }}";
+          for (const [key, value] of Object.entries({
+            TF_HTTP_ADDRESS: url,
+            TF_HTTP_LOCK_ADDRESS: url,
+            TF_HTTP_UNLOCK_ADDRESS: url,
+            TF_HTTP_USERNAME: "${{ github.repository_owner }}",
+            TF_HTTP_PASSWORD: token,
+          })) {
+            core.setSecret(value);
+            core.exportVariable(key, value);
           }
     - uses: hashicorp/setup-terraform@v3
       with:
@@ -74,5 +44,5 @@ runs:
         terraform_wrapper: ${{ inputs.terraform_wrapper }}
 
 branding:
-  icon: 'terminal'
-  color: 'purple'
+  icon: "terminal"
+  color: "purple"
