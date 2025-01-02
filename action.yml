@@ -10,6 +10,10 @@ inputs:
   state:
     description: "State file path/name on bucket"
     required: true
+  use_federated_token:
+    description: "Whether to use federated token issued by a trusted secure token service"
+    required: false
+    default: ''
   terraform_version:
     description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
     default: "latest"
@@ -26,7 +30,7 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-          const token = await core.getIDToken();
+          const token = '${{ inputs.use_federated_token }}'.length > 0 ? process.env.FEDERATED_TOKEN:await core.getIDToken();
           const url = "${{ inputs.endpoint }}/states/${{ inputs.state }}";
           for (const [key, value] of Object.entries({
             TF_HTTP_ADDRESS: url,
