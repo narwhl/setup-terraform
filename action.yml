@@ -7,6 +7,10 @@ inputs:
     description: "Terraform HTTP backend to store the state"
     required: true
     default: "https://terraform.narwhl.workers.dev"
+  enable_caching:
+    description: "Enable caching provider binaries"
+    default: "false"
+    required: false
   state:
     description: "State file path/name on bucket"
     required: true
@@ -46,6 +50,21 @@ runs:
       with:
         terraform_version: ${{ inputs.terraform_version }}
         terraform_wrapper: ${{ inputs.terraform_wrapper }}
+    - name: Configure Terraform plugin cache
+      if: inputs.enable_caching == 'true'
+      shell: bash
+      run: |
+        echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >>"$GITHUB_ENV"
+        mkdir --parents "$HOME/.terraform.d/plugin-cache"
+    - name: Cache Terraform
+      uses: actions/cache@v4
+      if: inputs.enable_caching == 'true'
+      with:
+        path: |
+          ~/.terraform.d/plugin-cache
+        key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+        restore-keys: |
+          terraform-${{ runner.os }}-
 
 branding:
   icon: "terminal"
