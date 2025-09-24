@@ -46,6 +46,7 @@ runs:
             core.setSecret(value);
             core.exportVariable(key, value);
           }
+          console.log(`${new Date().toISOString()} \x1b[1m\x1b[32m[✔] Terraform backend credentials configured\x1b[0m`)
     - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ inputs.terraform_version }}
